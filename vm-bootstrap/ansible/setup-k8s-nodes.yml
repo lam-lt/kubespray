@@ -1,0 +1,40 @@
+---
+- name: Configure Nexus proxy repositories on K8s nodes
+  hosts: all
+  become: true
+
+  vars:
+    nexus_url: "http://10.89.243.244:8081"
+
+  tasks:
+    - name: Yum | Disable default Rocky Linux repos
+      ansible.builtin.command:
+        cmd: dnf config-manager --disable baseos appstream extras crb
+      failed_when: false
+      changed_when: false
+
+    - name: Yum | Write Nexus proxy repo file
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/nexus.repo
+        mode: "0644"
+        content: |
+          [nexus-baseos]
+          name=Rocky 9 BaseOS via Nexus
+          baseurl={{ nexus_url }}/repository/yum-proxy-rocky-baseos/
+          enabled=1
+          gpgcheck=0
+
+          [nexus-appstream]
+          name=Rocky 9 AppStream via Nexus
+          baseurl={{ nexus_url }}/repository/yum-proxy-rocky-appstream/
+          enabled=1
+          gpgcheck=0
+
+    - name: Yum | Clean dnf cache
+      ansible.builtin.command: dnf clean all
+      changed_when: false
+
+    - name: Yum | Test repo connectivity (install curl if missing)
+      ansible.builtin.dnf:
+        name: curl
+        state: present
