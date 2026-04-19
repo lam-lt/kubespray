@@ -1,0 +1,16 @@
+kube_version: 1.33.7
+
+kube_service_addresses: 10.233.0.0/18
+kube_pods_subnet: 10.233.64.0/18
+
+kube_network_plugin: cilium
+
+kube_owner: root
+
+container_manager: containerd
+cluster_name: mycluster.local
+kube_proxy_mode: ipvs
+dns_mode: coredns
+enable_nodelocaldns: true
+metrics_server_enabled: true
+kubernetes_audit: true

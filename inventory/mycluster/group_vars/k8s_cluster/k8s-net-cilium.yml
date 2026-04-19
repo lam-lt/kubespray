@@ -1,0 +1,19 @@
+kube_network_plugin: cilium
+
+cilium_version: "1.18.4"
+
+cilium_ip_masq: true
+cilium_tunnel_mode: "vxlan"
+
+cilium_hubble_enabled: true
+cilium_hubble_relay_enabled: true
+cilium_hubble_ui_enabled: true
+
+cilium_operator_replicas: 2
+cilium_enable_bpf_masquerade: true
+
+cilium_kube_proxy_replacement: "true"
+
+cilium_loadbalancer_mode: "snat"
+cilium_l2_announcements_enabled: true
+cilium_externalips_enabled: true

@@ -1,0 +1,19 @@
+bootstrap_os: rhel
+
+ansible_user: rocky
+ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+
+ansible_python_interpreter: /usr/bin/python3
+
+upstream_dns_servers:
+  - 8.8.8.8
+  - 1.1.1.1
+
+etcd_deployment_type: host
+
+disable_firewalld: true
+
+download_run_once: true
+download_localhost: false
+
+rhel_enable_repos: true
