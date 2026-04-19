@@ -1,6 +1,7 @@
 bootstrap_os: rhel
 
 ansible_user: rocky
+ansible_become: true
 ansible_ssh_private_key_file: ~/.ssh/id_ed25519
 
 ansible_python_interpreter: /usr/bin/python3
@@ -13,7 +14,6 @@ etcd_deployment_type: host
 
 disable_firewalld: true
 
-download_run_once: true
-download_localhost: false
+download_run_once: false
 
-rhel_enable_repos: true
+# rhel_enable_repos managed in offline.yml

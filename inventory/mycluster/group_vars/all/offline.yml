@@ -1,0 +1,38 @@
+---
+## Nexus Repository proxy for air-gapped / cached installation
+nexus_url: "http://10.89.243.244:8081"
+
+# ---------------------------------------------------------------------------
+# Binary downloads — Raw proxy repos
+# ---------------------------------------------------------------------------
+dl_k8s_io_url: "{{ nexus_url }}/repository/raw-proxy-k8s"
+github_url: "{{ nexus_url }}/repository/raw-proxy-github"
+
+# ---------------------------------------------------------------------------
+# OS packages — Yum proxy repos
+# ---------------------------------------------------------------------------
+# Repo files trên nodes được cấu hình bởi vm-bootstrap/ansible/setup-k8s-nodes.yml
+# Disable Kubespray auto-enabling RHEL repos — nodes đã dùng Nexus yum proxy
+rhel_enable_repos: false
+
+# ---------------------------------------------------------------------------
+# Container images — Docker proxy group (port 8082)
+# Dùng containerd_registries_mirrors thay vì override kube_image_repo
+# để giữ nguyên tên image, Nexus tự cache từ upstream
+# ---------------------------------------------------------------------------
+containerd_registries_mirrors:
+  - prefix: registry.k8s.io
+    mirrors:
+      - host: "http://10.89.243.244:8082"
+        capabilities: ["pull", "resolve"]
+        skip_verify: true
+  - prefix: quay.io
+    mirrors:
+      - host: "http://10.89.243.244:8082"
+        capabilities: ["pull", "resolve"]
+        skip_verify: true
+  - prefix: docker.io
+    mirrors:
+      - host: "http://10.89.243.244:8082"
+        capabilities: ["pull", "resolve"]
+        skip_verify: true

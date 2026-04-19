@@ -1,0 +1,11 @@
+---
+# Cilium CNI configuration
+# Full options: inventory/sample/group_vars/k8s_cluster/k8s-net-cilium.yml
+
+# Hubble disabled (default) — không cần image hubble-relay, hubble-ui
+# cilium_enable_hubble: false
+
+# Air-gapped: cilium-cli pulls Helm chart từ OCI registry (quay.io/cilium/charts)
+# bằng HTTP client riêng, KHÔNG qua containerd mirrors.
+# Trỏ về Nexus Docker proxy để cache chart trong air-gapped network.
+cilium_install_extra_flags: ""
