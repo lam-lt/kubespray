@@ -1,0 +1,120 @@
+---
+- name: Setup Docker Engine and Nexus Repository Manager on Rocky Linux 9
+  hosts: nexus
+  become: true
+
+  vars:
+    nexus_version: "3.91.1"
+    nexus_data_dir: /opt/nexus-data
+    nexus_port: 8081
+    nexus_docker_port: 8082
+    nexus_docker_hosted_port: 5000
+    nexus_compose_dir: /opt/nexus
+    docker_users:
+      - rocky
+
+  # ---------------------------------------------------------------------------
+  # Docker Engine
+  # ---------------------------------------------------------------------------
+  tasks:
+    - name: Docker | Add Docker CE repository
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/rhel/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: "0644"
+
+    - name: Docker | Install Docker CE packages
+      ansible.builtin.dnf:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Docker | Enable and start Docker service
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Docker | Add users to docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: true
+      loop: "{{ docker_users }}"
+
+  # ---------------------------------------------------------------------------
+  # Nexus — Docker Compose
+  # ---------------------------------------------------------------------------
+    - name: Nexus | Create compose and data directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ nexus_compose_dir }}"
+        - "{{ nexus_data_dir }}"
+
+    # Nexus container chạy với UID 200
+    - name: Nexus | Set data directory ownership to UID 200
+      ansible.builtin.file:
+        path: "{{ nexus_data_dir }}"
+        owner: "200"
+        group: "200"
+        recurse: true
+
+    - name: Nexus | Write docker-compose.yml
+      ansible.builtin.copy:
+        dest: "{{ nexus_compose_dir }}/docker-compose.yml"
+        mode: "0644"
+        content: |
+          services:
+            nexus:
+              image: sonatype/nexus3:{{ nexus_version }}
+              container_name: nexus
+              restart: unless-stopped
+              ports:
+                - "{{ nexus_port }}:8081"
+                - "{{ nexus_docker_port }}:8082"
+                - "{{ nexus_docker_hosted_port }}:5000"
+              volumes:
+                - {{ nexus_data_dir }}:/nexus-data
+              environment:
+                INSTALL4J_ADD_VM_PARAMS: >-
+                  -Xms4g
+                  -Xmx4g
+                  -XX:MaxDirectMemorySize=2g
+                  -Djava.util.prefs.userRoot=/nexus-data/javaprefs
+      notify: Restart nexus
+
+    - name: Nexus | Start via Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ nexus_compose_dir }}"
+        state: present
+
+    - name: Nexus | Open firewall ports (if firewalld active)
+      ansible.posix.firewalld:
+        port: "{{ item }}/tcp"
+        permanent: true
+        state: enabled
+        immediate: true
+      failed_when: false
+      loop:
+        - "{{ nexus_port }}"
+        - "{{ nexus_docker_port }}"
+        - "{{ nexus_docker_hosted_port }}"
+
+    - name: Nexus | Print access info
+      ansible.builtin.debug:
+        msg:
+          - "Nexus is starting at http://{{ ansible_host }}:{{ nexus_port }}"
+          - "Admin password: docker exec nexus cat /nexus-data/admin.password"
+
+  handlers:
+    - name: Restart nexus
+      community.docker.docker_compose_v2:
+        project_src: "{{ nexus_compose_dir }}"
+        state: restarted
