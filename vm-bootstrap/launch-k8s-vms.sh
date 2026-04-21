@@ -12,7 +12,6 @@ CLOUD_INIT="$(dirname "$0")/cloud-init.yml"
 
 CONTROL_PLANE_NODES=(k8s-cp1 k8s-cp2 k8s-cp3)
 WORKER_NODES=(k8s-worker1 k8s-worker2)
-NEXUS_NODE="nexus"
 
 CP_CPU=2
 CP_MEM=3G
@@ -21,10 +20,6 @@ CP_DISK=15G
 WORKER_CPU=2
 WORKER_MEM=2G
 WORKER_DISK=15G
-
-NEXUS_CPU=4
-NEXUS_MEM=8G
-NEXUS_DISK=20G
 
 launch_vm() {
   local name=$1 cpu=$2 mem=$3 disk=$4
@@ -49,9 +44,6 @@ for node in "${WORKER_NODES[@]}"; do
   launch_vm "$node" "$WORKER_CPU" "$WORKER_MEM" "$WORKER_DISK"
 done
 
-echo "=== Launching Nexus repository node ==="
-launch_vm "$NEXUS_NODE" "$NEXUS_CPU" "$NEXUS_MEM" "$NEXUS_DISK"
-
 echo ""
-echo "=== All VMs launched. Current status: ==="
+echo "=== All K8s VMs launched. Current status: ==="
 multipass list
